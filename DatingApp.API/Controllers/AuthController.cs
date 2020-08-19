@@ -1,5 +1,5 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
+using jwt = System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +9,7 @@ using DatingApp.API.Dtos;
 using DatingApp.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
+using tok = Microsoft.IdentityModel.Tokens;
 
 namespace DatingApp.API.Controllers
 {
@@ -60,19 +60,19 @@ namespace DatingApp.API.Controllers
                     new Claim(ClaimTypes.Name, userFromRepo.UserName)
                 };
 
-                var key = new SymmetricSecurityKey(Encoding.UTF8.
+                var key = new tok.SymmetricSecurityKey(Encoding.UTF8.
                         GetBytes(_config.GetSection("AppSettings:Token").Value));
                 
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+                var creds = new tok.SigningCredentials(key, tok.SecurityAlgorithms.HmacSha256Signature);
 
-                var tokenDescriptor = new SecurityTokenDescriptor
+                var tokenDescriptor = new tok.SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
                     Expires = DateTime.Now.AddDays(1),
                     SigningCredentials = creds
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new jwt.JwtSecurityTokenHandler();
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
 

@@ -1,7 +1,6 @@
 ﻿using DatingApp.API.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -30,8 +29,8 @@ namespace DatingApp.API
         {
             services.AddDbContext<DataContext>(x => x.UseSqlite
                      (Configuration.GetConnectionString("DefaultConnection")));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                    .AddJsonOptions(opt => {
+            services.AddControllers()
+                    .AddNewtonsoftJson(opt => {
                         opt.SerializerSettings.ReferenceLoopHandling = 
                         Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                     });
@@ -53,6 +52,13 @@ namespace DatingApp.API
                         };
                     });
             services.AddScoped<LogUserActivity>();
+
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardLimit = 2;
+                options.KnownProxies.Add(IPAddress.Parse("127.0.10.1"));
+                options.ForwardedForHeaderName = "X-Forwarded-For-My-Custom-Header-Name";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -75,13 +81,12 @@ namespace DatingApp.API
                         }
                     })
                 );
-                //app.UseHsts();
+                app.UseHsts();
             }
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseHttpsRedirection();
             app.UseAuthentication();
-            app.UseMvc();
         }
     }
 }
