@@ -1,4 +1,5 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using DatingAppNew.API.Dtos;
 using DatingAppNew.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DatingAppNew.API.Controllers
 {
@@ -26,61 +28,61 @@ namespace DatingAppNew.API.Controllers
             _mapper = mapper;
         }
 
-        // [HttpPost("register")]
-        // public async Task<IActionResult> Register(UserForRegisterDto userForRegisterDto)
-        // {
-        //     userForRegisterDto.UserName = userForRegisterDto.UserName.ToLower();
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(UserForRegisterDto userForRegisterDto)
+        {
+            userForRegisterDto.UserName = userForRegisterDto.UserName.ToLower();
 
-        //     if (await _repo.UserExists(userForRegisterDto.UserName))
-        //         return BadRequest("UserName already exists");
+            if (await _repo.UserExists(userForRegisterDto.UserName))
+                return BadRequest("UserName already exists");
 
-        //     var userToCreate = _mapper.Map<User>(userForRegisterDto);
+            var userToCreate = _mapper.Map<User>(userForRegisterDto);
 
-        //     var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
+            var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
 
-        //     var userTorReturn = _mapper.Map<UserForDetailedDto>(createdUser);
+            var userTorReturn = _mapper.Map<UserForDetailedDto>(createdUser);
 
-        //     return CreatedAtRoute("GetUser", new {controller = "Users", id = createdUser.Id},
-        //                           userTorReturn);
-        // }
+            return CreatedAtRoute("GetUser", new {controller = "Users", id = createdUser.Id},
+                                  userTorReturn);
+        }
 
-        // [HttpPost("login")]
-        // public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
-        // {
-        //         var userFromRepo = await _repo.Login(userForLoginDto.UserName.ToLower(), userForLoginDto.Password);
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
+        {
+                var userFromRepo = await _repo.Login(userForLoginDto.UserName.ToLower(), userForLoginDto.Password);
 
-        //         if (userFromRepo == null)
-        //             return Unauthorized();
+                if (userFromRepo == null)
+                    return Unauthorized();
 
-        //         var claims = new []
-        //         {
-        //             new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
-        //             new Claim(ClaimTypes.Name, userFromRepo.UserName)
-        //         };
+                var claims = new []
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
+                    new Claim(ClaimTypes.Name, userFromRepo.UserName)
+                };
 
-        //         var key = new tok.SymmetricSecurityKey(Encoding.UTF8.
-        //                 GetBytes(_config.GetSection("AppSettings:Token").Value));
+                var key = new SymmetricSecurityKey(Encoding.UTF8.
+                        GetBytes(_config.GetSection("AppSettings:Token").Value));
                 
-        //         var creds = new tok.SigningCredentials(key, tok.SecurityAlgorithms.HmacSha256Signature);
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
-        //         var tokenDescriptor = new tok.SecurityTokenDescriptor
-        //         {
-        //             Subject = new ClaimsIdentity(claims),
-        //             Expires = DateTime.Now.AddDays(1),
-        //             SigningCredentials = creds
-        //         };
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.Now.AddDays(1),
+                    SigningCredentials = creds
+                };
 
-        //         var tokenHandler = new jwt.JwtSecurityTokenHandler();
+                var tokenHandler = new JwtSecurityTokenHandler();
 
-        //         var token = tokenHandler.CreateToken(tokenDescriptor);
+                var token = tokenHandler.CreateToken(tokenDescriptor);
 
-        //         var user = _mapper.Map<UserForListDto>(userFromRepo);
+                var user = _mapper.Map<UserForListDto>(userFromRepo);
 
-        //         return Ok(new
-        //         {
-        //             token = tokenHandler.WriteToken(token),
-        //             user
-        //         });
-        // }
+                return Ok(new
+                {
+                    token = tokenHandler.WriteToken(token),
+                    user
+                });
+        }
     }
 }
